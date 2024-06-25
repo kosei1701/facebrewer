@@ -16,7 +16,7 @@ st.sidebar.write("Blueprint")
 st.title('Blueprint')
 
  # 画像を表示
-image_path = os.path.join('image', 'image1')
+image_path = os.path.join('image', 'image1.png')
 st.image(image_path, use_column_width=True)
 
 st.markdown("""
