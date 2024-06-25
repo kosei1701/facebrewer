@@ -1,4 +1,5 @@
-#streamlit run 🏠_Main.py
+# .\myenv\Scripts\activate
+# streamlit run 🏠_Main.py
 
 import streamlit as st
 import os
