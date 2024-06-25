@@ -14,7 +14,13 @@ from utils.grad_cam import GradCAM
 from utils.image_utils import add_transparent_bg
 from utils.model_utils import load_model
 
+# ディレクトリのベースパスを取得
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# ページ設定
+st.set_page_config(
+    page_icon=os.path.join(BASE_DIR, 'image', 'favicon1.png')  # ファビコンのパスを設定
+)
 
 
 # サイドバーに "Brew"
