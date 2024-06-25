@@ -15,8 +15,9 @@ st.sidebar.write("Blueprint")
 # メインパネル
 st.title('Blueprint')
 
-# 画像を表示
-st.image("C:\\Users\\kosei\\OneDrive\\デスクトップ\\成果物\\Lib\\images.png", use_column_width=True)
+ # 画像を表示
+image_path = os.path.join('image', 'image1')
+st.image(image_path, use_column_width=True)
 
 st.markdown("""
 ##### Remarks
