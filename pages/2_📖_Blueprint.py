@@ -6,7 +6,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ページ設定
 st.set_page_config(
-    page_icon=os.path.join(BASE_DIR, 'image', 'favicon1.png')  # ファビコンのパスを設定
+    page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
 )
 
 # サイドバーに "Blueprint" 

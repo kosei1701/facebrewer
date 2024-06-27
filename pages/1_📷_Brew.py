@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ページ設定
 st.set_page_config(
-    page_icon=os.path.join(BASE_DIR, 'image', 'favicon1.png')  # ファビコンのパスを設定
+    page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
 )
 
 
@@ -117,11 +117,8 @@ def main():
                 print(f"Error applying superimposed image: {e}")
                 print(f"Resized shape: {superimposed_img_resized.shape}, original face box shape: {(h, w)}")
 
-
-        # 画像の上にスペースと「Result」のテキストを追加
-        image_rgb = cv2.copyMakeBorder(image_rgb, 50, 0, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255))
-        cv2.putText(image_rgb, 'Result', (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 2)
-
+        st.write("Result")
+        
         # 画像表示
         st.image(image_rgb, channels="BGR")
 
