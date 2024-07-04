@@ -15,14 +15,24 @@ st.sidebar.write("Blueprint")
 # メインパネル
 st.title('Blueprint')
 
+
  # 画像を表示
-image_path = os.path.join('image', 'image1.png')
+st.write("#### Application workflow")
+image_path = os.path.join('image', 'blueprint1.png')
 st.image(image_path, use_column_width=True)
 
-st.markdown("""
-##### Remarks
+st.write("")
+st.divider()
 
-- XXXXXXXXXX
-- XXXXXXXXXX
-- XXXXXXXXXX
-""")
+ # 画像を表示
+st.write("#### Model background")
+image_path = os.path.join('image', 'blueprint2.png')
+st.image(image_path, use_column_width=True)
+
+st.write("")
+st.divider()
+
+ # 画像を表示
+st.write("#### ResNet18 arquitecture")
+image_path = os.path.join('image', 'blueprint3.png')
+st.image(image_path, use_column_width=True)

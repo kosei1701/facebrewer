@@ -19,7 +19,7 @@ st.sidebar.write("Home")
 st.title('Face Brewer')
 
  # 画像を表示
-image_path = os.path.join('image', 'スクリーンショット 2024-06-23 163252.png')
+image_path = os.path.join('image', 'main1.png')
 st.image(image_path, use_column_width=True)
 
 
