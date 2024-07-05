@@ -33,11 +33,11 @@ class_colors = {
 }
 
 def main():
-    st.title('Image brew')
+    st.title('Brew your face')
 
     # モデルの読み込み
     model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
-    model_ft = load_model(model_path, num_classes=5)
+    model_ft = load_model(model_path, num_classes=5)  # num_classesを追加
 
     # Grad-CAMのインスタンス化
     target_layer = model_ft.layer4[1].conv2
@@ -117,7 +117,8 @@ def main():
                 label_bg_alpha = 0.6  # 背景の透明度を設定 (0:透明, 1:不透明)
 
                 # クラス名の背景を描画
-                label_size, _ = cv2.getTextSize(class_name, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=font_thickness)
+                label_text = f"{class_name}: {probabilities[class_idx] * 100:.1f}%"  # クラス名と確率を表示
+                label_size, _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=font_thickness)
                 label_w = label_size[0]
                 label_h = label_size[1]
                 label_bg_start = (x, y - label_h - 10)
@@ -126,8 +127,8 @@ def main():
                 cv2.rectangle(overlay, label_bg_start, label_bg_end, label_bg_color, -1)
                 image_rgb = cv2.addWeighted(overlay, label_bg_alpha, image_rgb, 1 - label_bg_alpha, 0)
 
-                # クラス名を描画
-                cv2.putText(image_rgb, class_name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
+                # クラス名と確率を描画
+                cv2.putText(image_rgb, label_text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
 
                 # 画像とグラフを並べて表示
                 col1, col2 = st.columns([1, 4])
