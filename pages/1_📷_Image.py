@@ -22,22 +22,22 @@ st.set_page_config(
 # サイドバーに "Brew"
 st.sidebar.write("Brew")
 
-# クラス名のリストと各クラスに対応する色を定義
+# クラス名のリストと各クラスに対応する色を定義 (BGR形式)
 class_names = ['Awamori', 'Nihonshu', 'No Alcohol', 'Shochu', 'Wine']
 class_colors = {
-    'Awamori': (219, 86, 147),    # 落ち着いたピンク
-    'Nihonshu': (99, 183, 96),    # 落ち着いたグリーン
-    'No Alcohol': (60, 153, 230), # 落ち着いたブルー
-    'Shochu': (255, 176, 112),    # 落ち着いたオレンジ
-    'Wine': (232, 232, 166)       # 落ち着いたイエロー
+    'Awamori': (147, 86, 219),    # 落ち着いたピンク (BGR)
+    'Nihonshu': (96, 183, 99),    # 落ち着いたグリーン (BGR)
+    'No Alcohol': (230, 153, 60), # 落ち着いたブルー (BGR)
+    'Shochu': (112, 176, 255),    # 落ち着いたオレンジ (BGR)
+    'Wine': (166, 232, 232)       # 落ち着いたイエロー (BGR)
 }
 
 def main():
-    st.title('Brew your face')
+    st.title('Image brew')
 
     # モデルの読み込み
     model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
-    model_ft = load_model(model_path)
+    model_ft = load_model(model_path, num_classes=5)
 
     # Grad-CAMのインスタンス化
     target_layer = model_ft.layer4[1].conv2
@@ -90,8 +90,12 @@ def main():
                 outputs = model_ft(face_tensor.requires_grad_(True))  # requires_gradをTrueに設定
                 probabilities = torch.softmax(outputs, dim=1).squeeze()
 
+                # クラスインデックスを取得
+                class_idx = torch.argmax(probabilities).item()
+                class_name = class_names[class_idx]
+
                 # Grad-CAMの生成
-                cam = grad_cam.generate_cam(face_tensor, class_idx=torch.argmax(probabilities).item())
+                cam = grad_cam.generate_cam(face_tensor, class_idx)
 
                 # ヒートマップの適用
                 heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
@@ -103,19 +107,27 @@ def main():
                 image_rgb[y:y+h, x:x+w] = overlay.astype(np.uint8)
 
                 # 画像にバウンディングボックスとラベルを追加
-                box_color = class_colors[class_names[torch.argmax(probabilities).item()]]
+                box_color = class_colors[class_name]
                 cv2.rectangle(image_rgb, (x, y), (x+w, y+h), box_color, 2)
 
                 # バウンディングボックス内にクラス名を描画
-                font_scale = w / 200  # 画像の幅に基づいて文字の大きさを調整
+                font_scale = w / 100  # 画像の幅に基づいて文字の大きさを調整
                 font_thickness = max(1, w // 300)  # 画像の幅に基づいて文字の細さを調整
-                label_bg_color = class_colors[class_names[torch.argmax(probabilities).item()]]  # 背景色をクラスの色に設定
-                label_bg_alpha = 0.6  # 透明度を調整 (0:透明, 1:不透明)
-                label_size, _ = cv2.getTextSize(class_names[torch.argmax(probabilities).item()], cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=font_thickness)
+                label_bg_color = class_colors[class_name]  # 背景色をクラスの色に設定
+                label_bg_alpha = 0.6  # 背景の透明度を設定 (0:透明, 1:不透明)
+
+                # クラス名の背景を描画
+                label_size, _ = cv2.getTextSize(class_name, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=font_thickness)
                 label_w = label_size[0]
                 label_h = label_size[1]
-                cv2.rectangle(image_rgb, (x, y - label_h - 10), (x + label_w, y), label_bg_color, -1)
-                cv2.putText(image_rgb, class_names[torch.argmax(probabilities).item()], (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
+                label_bg_start = (x, y - label_h - 10)
+                label_bg_end = (x + label_w, y)
+                overlay = image_rgb.copy()
+                cv2.rectangle(overlay, label_bg_start, label_bg_end, label_bg_color, -1)
+                image_rgb = cv2.addWeighted(overlay, label_bg_alpha, image_rgb, 1 - label_bg_alpha, 0)
+
+                # クラス名を描画
+                cv2.putText(image_rgb, class_name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
 
                 # 画像とグラフを並べて表示
                 col1, col2 = st.columns([1, 4])
@@ -123,8 +135,8 @@ def main():
                     st.image(face_resized, channels="BGR", caption=f"Face {i+1}")
 
                 with col2:
-                    fig, ax = plt.subplots(figsize=(11, 3))  # 横10:縦3の比率に調整
-                    colors = [(r / 255, g / 255, b / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
+                    fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
+                    colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
                     probabilities_np = probabilities.detach().cpu().numpy()
                     probabilities_percent = probabilities_np * 100
 
