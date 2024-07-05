@@ -127,4 +127,4 @@ if start_button:
 
     # キャプチャを解放し、ウェブカメラを閉じる
     video_capture.release()
-    # cv2.destroyAllWindows()  # ここを削除
+    # cv2.destroyAllWindows()  # 不要なので削除
