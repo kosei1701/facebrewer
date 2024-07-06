@@ -19,27 +19,6 @@ st.set_page_config(
     page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
 )
 
-# カスタムCSSの追加
-st.markdown("""
-    <style>
-    .stImage {
-        display: inline-block;
-        vertical-align: top;
-    }
-    .stPlotlyChart {
-        display: inline-block;
-        vertical-align: top;
-        width: 100%;
-    }
-    @media (max-width: 600px) {
-        .stImage, .stPlotlyChart {
-            display: block;
-            width: 100%;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
 # サイドバーに "Brew"
 st.sidebar.write("Brew")
 
@@ -151,24 +130,28 @@ def main():
                 cv2.putText(image_rgb, class_name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
 
                 # 画像とグラフを並べて表示
-                st.image(face_resized, channels="BGR", caption=f"Face {i+1}")
-                fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
-                colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
-                probabilities_np = probabilities.detach().cpu().numpy()
-                probabilities_percent = probabilities_np * 100
+                cols = st.columns(2)
+                with cols[0]:
+                    st.image(face_resized, channels="BGR", caption=f"Face {i+1}")
 
-                # クラス名、確率、色を一緒にしてソート
-                sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
-                sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
+                with cols[1]:
+                    fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
+                    colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
+                    probabilities_np = probabilities.detach().cpu().numpy()
+                    probabilities_percent = probabilities_np * 100
 
-                bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
-                for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
-                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
+                    # クラス名、確率、色を一緒にしてソート
+                    sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
+                    sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
 
-                ax.invert_yaxis()  # グラフを上から大きい順にする
-                ax.tick_params(axis='both', which='major', labelsize=12)
-                plt.tight_layout()
-                st.pyplot(fig)
+                    bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
+                    for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
+                        ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
+
+                    ax.invert_yaxis()  # グラフを上から大きい順にする
+                    ax.tick_params(axis='both', which='major', labelsize=12)
+                    plt.tight_layout()
+                    st.pyplot(fig)
 
             # 最終的な結果の画像を表示
             st.image(image_rgb, channels="BGR")
