@@ -19,6 +19,27 @@ st.set_page_config(
     page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
 )
 
+# カスタムCSSの追加
+st.markdown("""
+    <style>
+    .stImage {
+        display: inline-block;
+        vertical-align: top;
+    }
+    .stPlotlyChart {
+        display: inline-block;
+        vertical-align: top;
+        width: 100%;
+    }
+    @media (max-width: 600px) {
+        .stImage, .stPlotlyChart {
+            display: block;
+            width: 100%;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # サイドバーに "Brew"
 st.sidebar.write("Brew")
 
@@ -33,11 +54,11 @@ class_colors = {
 }
 
 def main():
-    st.title('Brew your face')
+    st.title('Image brew')
 
     # モデルの読み込み
     model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
-    model_ft = load_model(model_path, num_classes=5)  # num_classesを追加
+    model_ft = load_model(model_path, num_classes=5)
 
     # Grad-CAMのインスタンス化
     target_layer = model_ft.layer4[1].conv2
@@ -111,14 +132,13 @@ def main():
                 cv2.rectangle(image_rgb, (x, y), (x+w, y+h), box_color, 2)
 
                 # バウンディングボックス内にクラス名を描画
-                font_scale = w / 100  # 画像の幅に基づいて文字の大きさを調整
+                font_scale = w / 150  # 画像の幅に基づいて文字の大きさを調整
                 font_thickness = max(1, w // 300)  # 画像の幅に基づいて文字の細さを調整
                 label_bg_color = class_colors[class_name]  # 背景色をクラスの色に設定
                 label_bg_alpha = 0.6  # 背景の透明度を設定 (0:透明, 1:不透明)
 
                 # クラス名の背景を描画
-                label_text = f"{class_name}: {probabilities[class_idx] * 100:.1f}%"  # クラス名と確率を表示
-                label_size, _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=font_thickness)
+                label_size, _ = cv2.getTextSize(class_name, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=font_thickness)
                 label_w = label_size[0]
                 label_h = label_size[1]
                 label_bg_start = (x, y - label_h - 10)
@@ -127,32 +147,28 @@ def main():
                 cv2.rectangle(overlay, label_bg_start, label_bg_end, label_bg_color, -1)
                 image_rgb = cv2.addWeighted(overlay, label_bg_alpha, image_rgb, 1 - label_bg_alpha, 0)
 
-                # クラス名と確率を描画
-                cv2.putText(image_rgb, label_text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
+                # クラス名を描画
+                cv2.putText(image_rgb, class_name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
 
                 # 画像とグラフを並べて表示
-                col1, col2 = st.columns([1, 4])
-                with col1:
-                    st.image(face_resized, channels="BGR", caption=f"Face {i+1}")
+                st.image(face_resized, channels="BGR", caption=f"Face {i+1}")
+                fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
+                colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
+                probabilities_np = probabilities.detach().cpu().numpy()
+                probabilities_percent = probabilities_np * 100
 
-                with col2:
-                    fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
-                    colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
-                    probabilities_np = probabilities.detach().cpu().numpy()
-                    probabilities_percent = probabilities_np * 100
+                # クラス名、確率、色を一緒にしてソート
+                sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
+                sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
 
-                    # クラス名、確率、色を一緒にしてソート
-                    sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
-                    sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
+                bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
+                for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
+                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
 
-                    bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
-                    for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
-                        ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
-
-                    ax.invert_yaxis()  # グラフを上から大きい順にする
-                    ax.tick_params(axis='both', which='major', labelsize=12)
-                    plt.tight_layout()
-                    st.pyplot(fig)
+                ax.invert_yaxis()  # グラフを上から大きい順にする
+                ax.tick_params(axis='both', which='major', labelsize=12)
+                plt.tight_layout()
+                st.pyplot(fig)
 
             # 最終的な結果の画像を表示
             st.image(image_rgb, channels="BGR")
