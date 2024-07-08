@@ -112,7 +112,7 @@ if uploaded_file is not None:
 
             text_x = x
             text_y = y - baseline - (text_height // 2)
-            cv2.putText(image_bgr, class_names[max_idx.item()], (text_x, text_y + (text_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+            cv2.putText(image_bgr, class_names[max_idx.item()], (text_x, text_y + (text_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
 
             try:
                 image_bgr[y:y+h, x:x+w] = superimposed_img
