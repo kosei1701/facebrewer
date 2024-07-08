@@ -111,7 +111,7 @@ def main():
                 cv2.rectangle(image_rgb, (x, y), (x+w, y+h), box_color, 2)
 
                 # バウンディングボックス内にクラス名を描画
-                font_scale = w / 150  # 画像の幅に基づいて文字の大きさを調整
+                font_scale = w / 100  # 画像の幅に基づいて文字の大きさを調整
                 font_thickness = max(1, w // 300)  # 画像の幅に基づいて文字の細さを調整
                 label_bg_color = class_colors[class_name]  # 背景色をクラスの色に設定
                 label_bg_alpha = 0.6  # 背景の透明度を設定 (0:透明, 1:不透明)
@@ -130,11 +130,11 @@ def main():
                 cv2.putText(image_rgb, class_name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1, cv2.LINE_AA)
 
                 # 画像とグラフを並べて表示
-                cols = st.columns(2)
-                with cols[0]:
+                col1, col2 = st.columns([1, 4])
+                with col1:
                     st.image(face_resized, channels="BGR", caption=f"Face {i+1}")
 
-                with cols[1]:
+                with col2:
                     fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
                     colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
                     probabilities_np = probabilities.detach().cpu().numpy()
