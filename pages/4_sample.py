@@ -104,21 +104,27 @@ if uploaded_file is not None:
             box_color = class_colors[class_names[max_idx.item()]]
             cv2.rectangle(image_bgr, (x, y), (x+w, y+h), box_color, 2)
 
-            (text_width, text_height), baseline = cv2.getTextSize(class_names[max_idx.item()], cv2.FONT_HERSHEY_SIMPLEX, 0.9, 2)
+            # クラスラベルの文字列のサイズを計算
+            (text_width, text_height), baseline = cv2.getTextSize(class_names[max_idx.item()], cv2.FONT_HERSHEY_SIMPLEX, 2.0, 4)  # 2倍に
             overlay = image_bgr.copy()
+
+            # 四角のサイズを文字のサイズに合わせて調整
             cv2.rectangle(overlay, (x, y - text_height - baseline), (x + text_width, y), box_color, thickness=cv2.FILLED)
             alpha = 0.7
             cv2.addWeighted(overlay, alpha, image_bgr, 1 - alpha, 0, image_bgr)
 
             text_x = x
             text_y = y - baseline - (text_height // 2)
-            cv2.putText(image_bgr, class_names[max_idx.item()], (text_x, text_y + (text_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
+
+            # テキスト描画時にthicknessを設定する必要があります
+            cv2.putText(image_bgr, class_names[max_idx.item()], (text_x, text_y + (text_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), thickness=4)
 
             try:
                 image_bgr[y:y+h, x:x+w] = superimposed_img
             except ValueError as e:
                 st.write(f"スーパーインポーズ画像の適用エラー: {e}")
                 st.write(f"スーパーインポーズ画像の形状: {superimposed_img.shape}, 元の顔ボックスの形状: {(h, w)}")
+
 
             # 画像とグラフを並べて表示
             col1, col2 = st.columns([1, 4])
