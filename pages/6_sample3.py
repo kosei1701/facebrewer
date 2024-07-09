@@ -65,7 +65,7 @@ st.sidebar.write("Brew")
 
 # モデルを読み込む関数
 def load_model(model_path, num_classes=5):
-    model = models.resnet18(pretrained=True)
+    model = models.resnet18(pretrained=False)  # 事前学習済みパラメータを使用しない
     num_ftrs = model.fc.in_features
     model.fc = torch.nn.Linear(num_ftrs, num_classes)
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
@@ -184,13 +184,15 @@ if uploaded_file is not None:
                 sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
                 sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
 
-                bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
-                for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
-                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
+                bars = ax.barh(range(len(sorted_class_names)), sorted_probabilities_percent, color=sorted_colors)
+                ax.set_yticks(range(len(sorted_class_names)))
+                ax.set_yticklabels(sorted_class_names)
+                ax.invert_yaxis()
+                ax.set_xlabel('Probability (%)')
+                ax.set_title('Class Probabilities')
+                for bar, prob in zip(bars, sorted_probabilities_percent):
+                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center')
 
-                ax.invert_yaxis()  # グラフを上から大きい順にする
-                ax.tick_params(axis='both', which='major', labelsize=12)
-                plt.tight_layout()
                 st.pyplot(fig)
 
         st.image(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB), use_column_width=True)
