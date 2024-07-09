@@ -7,10 +7,11 @@ from PIL import Image
 from mtcnn import MTCNN
 import streamlit as st
 import matplotlib.pyplot as plt
-from utils.grad_cam import GradCAM  # utilsフォルダに移動したGrad-CAMクラスのインポート
 
 # ディレクトリのベースパスを取得
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+from utils.grad_cam import GradCAM  # utilsフォルダに移動したGrad-CAMクラスのインポート
 
 # ページ設定
 st.set_page_config(
@@ -41,11 +42,6 @@ class_colors = {
 
 # モデルのパス
 model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
-
-# GradCAMのパス
-model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
-
-
 
 # モデルをロード
 model_ft = load_model(model_path, num_classes=len(class_names))
