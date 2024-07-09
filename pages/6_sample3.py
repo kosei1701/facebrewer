@@ -84,6 +84,10 @@ class_colors = {
     'Wine': (166, 232, 232)       # 落ち着いたイエロー (BGR)
 }
 
+def bgr_to_rgba(color, alpha=1.0):
+    r, g, b = color
+    return (r / 255, g / 255, b / 255, alpha)
+
 # モデルのパス
 model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
 
@@ -187,7 +191,7 @@ if uploaded_file is not None:
                 st.image(face_image, caption=f"Detected Face {i+1}", use_column_width=True)
             with col2:
                 fig, ax = plt.subplots()
-                ax.barh(class_names, probabilities, color=[class_colors[name] for name in class_names])
+                ax.barh(class_names, probabilities, color=[bgr_to_rgba(class_colors[name]) for name in class_names])
                 ax.set_xlim([0, 1])
                 ax.set_xlabel('Probability')
                 ax.set_title('Class Probabilities')
