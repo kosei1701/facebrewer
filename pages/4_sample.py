@@ -17,6 +17,9 @@ st.set_page_config(
     page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
 )
 
+# gradcamのパス
+GradCAM = os.path.join(BASE_DIR, 'util', 'grad_cam.py')
+
 # サイドバーに "Brew"
 st.sidebar.write("Brew")
 
@@ -45,9 +48,6 @@ model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
 # モデルをロード
 model_ft = load_model(model_path, num_classes=len(class_names))
 
-# GradCAMインスタンスを作成
-grad_cam = GradCAM(model_ft, model_ft.layer4[1].conv2)
-
 # Streamlitアプリケーション
 st.title("Image brew")
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
@@ -65,6 +65,8 @@ if uploaded_file is not None:
     # MTCNNで顔検出
     detector = MTCNN()
     faces = detector.detect_faces(image_rgb)
+
+    grad_cam = GradCAM(model_ft, model_ft.layer4[1].conv2)
 
     if len(faces) == 0:
         st.write("No face detected")
