@@ -159,7 +159,7 @@ if uploaded_file is not None:
             cam = cv2.resize(cam, (w, h))
 
             # ヒートマップをRGBに変換
-            heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_HOT)
+            heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
             heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
 
             # 元の画像に重ね合わせる
