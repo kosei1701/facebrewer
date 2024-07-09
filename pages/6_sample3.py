@@ -182,13 +182,9 @@ if uploaded_file is not None:
             # テキスト描画時にthicknessを設定する必要があります
             cv2.putText(image_bgr, class_names[max_idx.item()], (text_x, text_y + (text_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), thickness=4)
 
-            try:
-                # 生成された画像を表示
-                st.image([image_bgr], caption='Processed Image', use_column_width=True)
+        try:
+            # 生成された画像を表示
+            st.image([cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)], caption='Processed Image', use_column_width=True)
 
-            except:
-                st.image([image_bgr], caption='Processed Image', use_column_width=True)
-                agg = plt.get_current_fig_manager()
-                agg = io.BytesIO()
-                plt.savefig(agg, format='png')
- st.pyplot st.image
+        except:
+            st.image([cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)], caption='Processed Image', use_column_width=True)
