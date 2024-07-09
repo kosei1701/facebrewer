@@ -4,48 +4,10 @@ import numpy as np
 import torch
 from torchvision import models, transforms
 from PIL import Image
-from mtcnn import MTCNN
 import streamlit as st
 import matplotlib.pyplot as plt
-from utils.grad_cam import GradCAM  # utilsフォルダに移動したGrad-CAMクラスのインポート
 
-# ディレクトリのベースパスを取得
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-# ページ設定
-st.set_page_config(
-    page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
-)
-
-# サイドバーに "Brew"
-st.sidebar.write("Brew")
-
-# モデルを読み込む関数
-def load_model(model_path, num_classes=5):
-    model = models.resnet18(pretrained=True)
-    num_ftrs = model.fc.in_features
-    model.fc = torch.nn.Linear(num_ftrs, num_classes)
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    model.eval()
-    return model
-
-# クラス名と色の定義
-class_names = ['Awamori', 'Nihonshu', 'No Alcohol', 'Shochu', 'Wine']
-class_colors = {
-    'Awamori': (147, 86, 219),    # 落ち着いたピンク (BGR)
-    'Nihonshu': (96, 183, 99),    # 落ち着いたグリーン (BGR)
-    'No Alcohol': (230, 153, 60), # 落ち着いたブルー (BGR)
-    'Shochu': (112, 176, 255),    # 落ち着いたオレンジ (BGR)
-    'Wine': (166, 232, 232)       # 落ち着いたイエロー (BGR)
-}
-
-# モデルのパス
-model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
-
-# モデルをロード
-model_ft = load_model(model_path, num_classes=len(class_names))
-
+# GradCAMクラスの定義
 class GradCAM:
     def __init__(self, model, target_layer):
         self.model = model
@@ -89,6 +51,40 @@ class GradCAM:
         heatmap = heatmap / np.max(heatmap)
         return heatmap
 
+# モデルを読み込む関数
+def load_model(model_path, num_classes=5):
+    model = models.resnet18(pretrained=True)
+    num_ftrs = model.fc.in_features
+    model.fc = torch.nn.Linear(num_ftrs, num_classes)
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    model.eval()
+    return model
+
+# ページ設定
+st.set_page_config(
+    page_icon="path_to_icon.png"  # ファビコンのパスを設定
+)
+
+# サイドバーに "Brew"
+st.sidebar.write("Brew")
+
+# クラス名と色の定義
+class_names = ['Awamori', 'Nihonshu', 'No Alcohol', 'Shochu', 'Wine']
+class_colors = {
+    'Awamori': (147, 86, 219),    # 落ち着いたピンク (BGR)
+    'Nihonshu': (96, 183, 99),    # 落ち着いたグリーン (BGR)
+    'No Alcohol': (230, 153, 60), # 落ち着いたブルー (BGR)
+    'Shochu': (112, 176, 255),    # 落ち着いたオレンジ (BGR)
+    'Wine': (166, 232, 232)       # 落ち着いたイエロー (BGR)
+}
+
+# モデルのパス
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+model_path = os.path.join(BASE_DIR, 'model', 'resnet_model(5).pth')
+
+# モデルをロード
+model_ft = load_model(model_path, num_classes=len(class_names))
+
 # Streamlitアプリケーション
 st.title("Image brew")
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
@@ -104,8 +100,9 @@ if uploaded_file is not None:
     image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
 
     # MTCNNで顔検出
-    detector = MTCNN()
-    faces = detector.detect_faces(image_rgb)
+    # ここにMTCNNの処理を記述する必要があります
+
+    grad_cam = GradCAM(model_ft, model_ft.layer4[1].conv2)
 
     if len(faces) == 0:
         st.write("No face detected")
@@ -167,7 +164,6 @@ if uploaded_file is not None:
                 st.write(f"スーパーインポーズ画像の適用エラー: {e}")
                 st.write(f"スーパーインポーズ画像の形状: {superimposed_img.shape}, 元の顔ボックスの形状: {(h, w)}")
 
-
             # 画像とグラフを並べて表示
             col1, col2 = st.columns([1, 4])
             with col1:
@@ -185,11 +181,15 @@ if uploaded_file is not None:
 
                 bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
                 for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
-                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
+                    width = bar.get_width()
+                    ax.text(width, bar.get_y() + bar.get_height()/2, f'{prob:.2f}%', ha='left', va='center', fontsize=12, color='black')
 
-                ax.invert_yaxis()  # グラフを上から大きい順にする
-                ax.tick_params(axis='both', which='major', labelsize=12)
-                plt.tight_layout()
+                ax.set_xlim([0, 100])
+                ax.set_xlabel('Probability (%)')
+                ax.set_title('Classification Probabilities')
+
                 st.pyplot(fig)
 
-        st.image(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB), use_column_width=True)
+        # 元の画像を表示
+        st.image(image_bgr, channels="BGR", caption="Original Image with Bounding Boxes and Class Labels")
+
