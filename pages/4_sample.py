@@ -17,9 +17,6 @@ st.set_page_config(
     page_icon=os.path.join(BASE_DIR, 'image', 'favicon3.png')  # ファビコンのパスを設定
 )
 
-# gradcamのパス
-GradCAM = os.path.join(BASE_DIR, 'util', 'grad_cam.py')
-
 # サイドバーに "Brew"
 st.sidebar.write("Brew")
 
