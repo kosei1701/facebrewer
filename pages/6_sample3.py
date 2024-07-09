@@ -7,50 +7,7 @@ from PIL import Image
 from mtcnn import MTCNN
 import streamlit as st
 import matplotlib.pyplot as plt
-
-# GradCAMクラスの定義
-class GradCAM:
-    def __init__(self, model, target_layer):
-        self.model = model
-        self.target_layer = target_layer
-        self.gradients = None
-        self.activations = None
-        self._register_hooks()
-
-    def _register_hooks(self):
-        def forward_hook(module, input, output):
-            self.activations = output.detach()
-
-        def backward_hook(module, grad_in, grad_out):
-            self.gradients = grad_out[0].detach()
-
-        self.target_layer.register_forward_hook(forward_hook)
-        self.target_layer.register_backward_hook(backward_hook)
-
-    def generate_cam(self, input_tensor, class_idx=None):
-        if class_idx is None:
-            class_idx = input_tensor.argmax(dim=1).item()
-
-        self.model.zero_grad()
-        input_tensor.requires_grad = True
-
-        output = self.model(input_tensor)
-        target = output[0, class_idx]
-        target.backward()
-
-        gradients = self.gradients
-        activations = self.activations
-
-        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
-        for i in range(activations.shape[1]):
-            activations[:, i, :, :] *= pooled_gradients[i]
-
-        heatmap = torch.mean(activations, dim=1).squeeze()
-        heatmap = np.maximum(heatmap.cpu().numpy(), 0)
-        heatmap = cv2.resize(heatmap, (input_tensor.shape[2], input_tensor.shape[3]))
-        heatmap = heatmap - np.min(heatmap)
-        heatmap = heatmap / np.max(heatmap)
-        return heatmap
+from utils.grad_cam import GradCAM  # utilsフォルダに移動したGrad-CAMクラスのインポート
 
 # ディレクトリのベースパスを取得
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -65,7 +22,7 @@ st.sidebar.write("Brew")
 
 # モデルを読み込む関数
 def load_model(model_path, num_classes=5):
-    model = models.resnet18(pretrained=False)  # 事前学習済みパラメータを使用しない
+    model = models.resnet18(pretrained=True)
     num_ftrs = model.fc.in_features
     model.fc = torch.nn.Linear(num_ftrs, num_classes)
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
@@ -105,8 +62,6 @@ if uploaded_file is not None:
     # MTCNNで顔検出
     detector = MTCNN()
     faces = detector.detect_faces(image_rgb)
-
-    grad_cam = GradCAM(model_ft, model_ft.layer4[1].conv2)
 
     if len(faces) == 0:
         st.write("No face detected")
@@ -184,15 +139,13 @@ if uploaded_file is not None:
                 sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
                 sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
 
-                bars = ax.barh(range(len(sorted_class_names)), sorted_probabilities_percent, color=sorted_colors)
-                ax.set_yticks(range(len(sorted_class_names)))
-                ax.set_yticklabels(sorted_class_names)
-                ax.invert_yaxis()
-                ax.set_xlabel('Probability (%)')
-                ax.set_title('Class Probabilities')
-                for bar, prob in zip(bars, sorted_probabilities_percent):
-                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center')
+                bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
+                for bar, prob, color in zip(bars, sorted_probabilities_percent, sorted_colors):
+                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{prob:.1f}%', va='center', ha='left', color='black', fontsize=10)
 
+                ax.invert_yaxis()  # グラフを上から大きい順にする
+                ax.tick_params(axis='both', which='major', labelsize=12)
+                plt.tight_layout()
                 st.pyplot(fig)
 
         st.image(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB), use_column_width=True)
