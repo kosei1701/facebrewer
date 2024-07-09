@@ -7,6 +7,8 @@ from PIL import Image
 from mtcnn import MTCNN
 import streamlit as st
 import matplotlib.pyplot as plt
+import sys
+import io
 
 # Grad-CAMのクラス定義
 class GradCAM:
@@ -104,7 +106,18 @@ if uploaded_file is not None:
 
     # MTCNNで顔検出
     detector = MTCNN()
-    faces = detector.detect_faces(image_rgb)
+
+    # stdoutとstderrのリダイレクト
+    sys_stdout = sys.stdout
+    sys_stderr = sys.stderr
+    sys.stdout = io.StringIO()
+    sys.stderr = io.StringIO()
+
+    try:
+        faces = detector.detect_faces(image_rgb)
+    finally:
+        sys.stdout = sys_stdout
+        sys.stderr = sys_stderr
 
     grad_cam = GradCAM(model_ft, model_ft.layer4[1].conv2)
 
