@@ -159,7 +159,10 @@ if uploaded_file is not None:
             heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
             heatmap_resized = cv2.resize(heatmap, (w, h), interpolation=cv2.INTER_LINEAR)
 
-            superimposed_img = cv2.addWeighted(face_image, 0.6, heatmap_resized, 0.4, 0)
+            # ヒートマップを元の画像に重ねる
+            heatmap_rgba = cv2.cvtColor(heatmap_resized, cv2.COLOR_BGR2RGBA)
+            blended = cv2.addWeighted(heatmap_rgba, 0.5, face_image, 0.5, 0, dtype=cv2.CV_8U)
+            blended_bgr = cv2.cvtColor(blended, cv2.COLOR_RGBA2BGR)
 
             box_color = class_colors[class_names[max_idx.item()]]
             cv2.rectangle(image_bgr, (x, y), (x+w, y+h), box_color, 2)
@@ -180,21 +183,12 @@ if uploaded_file is not None:
             cv2.putText(image_bgr, class_names[max_idx.item()], (text_x, text_y + (text_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), thickness=4)
 
             try:
-                image_bgr[y:y+h, x:x+w] = superimposed_img
-            except ValueError as e:
-                st.write(f"スーパーインポーズ画像の適用エラー: {e}")
-                st.write(f"スーパーインポーズ画像の形状: {superimposed_img.shape}, 元の顔ボックスの形状: {(h, w)}")
+                # 生成された画像を表示
+                st.image([image_bgr], caption='Processed Image', use_column_width=True)
 
-            # 画像とグラフを並べて表示
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                st.image(face_image, caption=f"Detected Face {i+1}", use_column_width=True)
-            with col2:
-                fig, ax = plt.subplots()
-                ax.barh(class_names, probabilities, color=[bgr_to_rgba(class_colors[name]) for name in class_names])
-                ax.set_xlim([0, 1])
-                ax.set_xlabel('Probability')
-                ax.set_title('Class Probabilities')
-                st.pyplot(fig)
-
-        st.image(image_bgr, caption='Processed Image', use_column_width=True)
+            except:
+                st.image([image_bgr], caption='Processed Image', use_column_width=True)
+                agg = plt.get_current_fig_manager()
+                agg = io.BytesIO()
+                plt.savefig(agg, format='png')
+ st.pyplot st.image
