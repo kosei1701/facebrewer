@@ -158,12 +158,13 @@ if uploaded_file is not None:
             cam = grad_cam.generate_cam(face_tensor, class_idx=max_idx.item())
             cam = cv2.resize(cam, (w, h))
 
-            # ヒートマップをRGBに変換
+            # ヒートマップをRGBに変換して色を逆転
             heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
-            heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+            heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)  # BGRからRGBに変換
+            heatmap_inverted = 255 - heatmap  # 色の逆転
 
             # 元の画像に重ね合わせる
-            superimposed_img = cv2.addWeighted(face_image, 0.6, heatmap, 0.4, 0)
+            superimposed_img = cv2.addWeighted(face_image, 0.6, heatmap_inverted, 0.4, 0)
 
             # バウンディングボックスの描画
             box_color = class_colors[class_names[max_idx.item()]]
