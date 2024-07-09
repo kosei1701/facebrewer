@@ -9,7 +9,7 @@ from mtcnn import MTCNN
 import streamlit as st
 import matplotlib.pyplot as plt
 
-# Add the project directory to the sys.path
+# BASE_DIRを設定
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
