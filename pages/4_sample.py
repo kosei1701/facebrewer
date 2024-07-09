@@ -1,3 +1,4 @@
+import sys
 import os
 import cv2
 import numpy as np
@@ -7,10 +8,12 @@ from PIL import Image
 from mtcnn import MTCNN
 import streamlit as st
 import matplotlib.pyplot as plt
-from utils.grad_cam import GradCAM  # utilsフォルダに移動したGrad-CAMクラスのインポート
 
-# ディレクトリのベースパスを取得
+# Add the project directory to the sys.path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+from utils.grad_cam import GradCAM  # utilsフォルダに移動したGrad-CAMクラスのインポート
 
 # ページ設定
 st.set_page_config(
