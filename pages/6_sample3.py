@@ -65,7 +65,7 @@ st.sidebar.write("Brew")
 
 # モデルを読み込む関数
 def load_model(model_path, num_classes=5):
-    model = models.resnet18(weights='ResNet18_Weights.IMAGENET1K_V1')
+    model = models.resnet18()
     num_ftrs = model.fc.in_features
     model.fc = torch.nn.Linear(num_ftrs, num_classes)
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
@@ -168,28 +168,16 @@ if uploaded_file is not None:
                 st.write(f"スーパーインポーズ画像の適用エラー: {e}")
                 st.write(f"スーパーインポーズ画像の形状: {superimposed_img.shape}, 元の顔ボックスの形状: {(h, w)}")
 
-
             # 画像とグラフを並べて表示
             col1, col2 = st.columns([1, 4])
             with col1:
-                st.image(face_image, channels="RGB", caption=f"Face {i+1}")
-
+                st.image(face_image, caption=f"Detected Face {i+1}", use_column_width=True)
             with col2:
-                fig, ax = plt.subplots(figsize=(11, 3))  # 横11:縦3の比率に調整
-                colors = [(b / 255, g / 255, r / 255) for r, g, b in [class_colors[class_name] for class_name in class_names]]
-                probabilities_np = probabilities.detach().cpu().numpy()
-                probabilities_percent = probabilities_np * 100
-
-                # クラス名、確率、色を一緒にしてソート
-                sorted_data = sorted(zip(probabilities_percent, class_names, colors), reverse=True)
-                sorted_probabilities_percent, sorted_class_names, sorted_colors = zip(*sorted_data)
-
-                bars = ax.barh(sorted_class_names, sorted_probabilities_percent, color=sorted_colors)
-                ax.set_xlim(0, 100)
-                ax.set_xlabel('Probability (%)')
-                ax.set_title('Classification Probabilities')
-                ax.bar_label(bars, fmt='%.2f')
+                fig, ax = plt.subplots()
+                ax.barh(class_names, probabilities, color=[class_colors[name] for name in class_names])
+                ax.set_xlim([0, 1])
+                ax.set_xlabel('Probability')
+                ax.set_title('Class Probabilities')
                 st.pyplot(fig)
 
-        st.image(image_bgr, channels="BGR", caption="Detected Faces with Grad-CAM")
-
+        st.image(image_bgr, caption='Processed Image', use_column_width=True)
